@@ -41,7 +41,25 @@ async def create_wallet(
 async def deposit_money(
     current_user: Annotated[User, Depends(get_current_active_user)],
     transaction: Transaction = Body(...),
+    wallet_id_to: int = Body(...),
     wallet_usecase: UserWalletService = Depends(Provide(Container.wallet_usecase)),
 ):
-    await wallet_usecase.send_money(transaction)
+    transaction_in = Transaction(
+        wallet_id=wallet_id_to,
+        currency_id=transaction.currency_id,
+        amount=transaction.amount,
+        outgoing=False,
+    )
+    await wallet_usecase.send_money(transaction_in, transaction)
     return JSONResponse({"message": "Money deposited successfully"})
+
+
+@router.post("/balance")
+@inject
+async def get_balance(
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    wallet_usecase: UserWalletService = Depends(Provide(Container.wallet_usecase)),
+    currency_id: int = Body(...),
+):
+    balance = await wallet_usecase.get_balance(current_user.id, currency_id)
+    return balance

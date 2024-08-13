@@ -14,8 +14,8 @@ class WalletModel(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     user: Mapped["UserModel"] = relationship(back_populates="wallets")
 
-    currencies: Mapped["WalletCurrencyModel"] = relationship("WalletCurrencyModel", back_populates="wallet")
-    transactions: Mapped["TransactionModel"] = relationship("TransactionModel", back_populates="wallet")
+    currencies = relationship("CurrencyModel", backref="CurrencyModel", secondary="wallet_currencies")
+    transactions = relationship("TransactionModel", back_populates="wallet")
     def __repr__(self):
         return f"<Wallet(balance='{self.balance}')>"
 
@@ -27,7 +27,7 @@ class CurrencyModel(Base):
     name: Mapped[str] = mapped_column(nullable=False)
     symbol: Mapped[str] = mapped_column(nullable=False)
 
-    wallets: Mapped["WalletCurrencyModel"] = relationship("WalletCurrencyModel", back_populates="currency")
+    wallets = relationship("WalletModel", backref="WalletModel", secondary="wallet_currencies")
 
     def __repr__(self):
         return f"<Currency(name='{self.name}', symbol='{self.symbol}')>"
@@ -39,8 +39,6 @@ class WalletCurrencyModel(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     wallet_id: Mapped[int] = mapped_column(ForeignKey("wallets.id"))
     currency_id: Mapped[int] = mapped_column(ForeignKey("currencies.id"))
-    wallet: Mapped["WalletModel"] = relationship("WalletModel", back_populates="currencies")
-    currency: Mapped["CurrencyModel"] = relationship("CurrencyModel", back_populates="wallets")
 
     def __repr__(self):
         return f"<WalletCurrency(amount='{self.amount}', type='{self.transaction_type}')>"

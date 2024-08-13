@@ -13,16 +13,7 @@ class Balance(BaseModel):
         from_attributes = True
 
 
-class Transaction(BaseModel):
-    id: Optional[int] = None
-    wallet_id_from: int
-    wallet_id_to: int
-    currency_id: int
-    amount: float
-    transaction_type: str
 
-    class Config:
-        from_attributes = True
 
 
 class Currency(BaseModel):
@@ -39,7 +30,18 @@ class Wallet(BaseModel):
     balance: float
     user_id: int
     currencies: list[Currency]
-    transactions: Optional[list[Transaction]] = None
+    transactions: Optional[list["Transaction"]] = None
+
+    class Config:
+        from_attributes = True
+
+
+class Transaction(BaseModel):
+    id: Optional[int] = None
+    wallet: Wallet
+    currency: Currency
+    amount: float
+    outgoing: bool = False
 
     class Config:
         from_attributes = True

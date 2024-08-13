@@ -9,7 +9,10 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import select, func
 
+from database.db_views import CreateView
+from wallet.models import WalletModel, CurrencyModel, TransactionModel, WalletCurrencyModel
 
 # revision identifiers, used by Alembic.
 revision: str = 'e76aeb9a5f62'
@@ -70,6 +73,18 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_wallet_currencies_id'), 'wallet_currencies', ['id'], unique=False)
     # ### end Alembic commands ###
+
+    selectable = (select(
+        WalletModel.user_id.label("user_id"),
+        WalletModel.id.label("wallet_id"),
+        CurrencyModel.name.label("currency_name"),
+        func.sum(TransactionModel.amount).label("balance"))
+                     .join(TransactionModel, WalletModel.id == TransactionModel.wallet_id)
+                     .join(CurrencyModel, TransactionModel.currency_id == CurrencyModel.id)
+                     .join(WalletCurrencyModel, WalletModel.id == WalletCurrencyModel.wallet_id)
+                     .group_by(WalletModel.user_id, WalletCurrencyModel.currency_id).alias("balance_view"))
+    CreateView('balance_view', selectable)
+
 
 
 def downgrade() -> None:

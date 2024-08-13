@@ -10,10 +10,10 @@ class IUserWalletService(ABC):
     def __init__(self, wallet_repository: WalletRepository, user_repository: UserRepository):
         pass
 
-    async def get_balance(self, user_id: int) -> Balance:
+    async def get_balance(self, user_id: int, currency_id: int) -> Balance:
         pass
 
-    async def send_money(self, transaction: Transaction) -> None:
+    async def send_money(self, transaction_in: Transaction, transaction_out: Transaction) -> None:
         pass
 
     async def create_wallet(self, user_id: int, currencies: list[Currency]) -> Wallet:
@@ -30,14 +30,19 @@ class UserWalletService(IUserWalletService):
         self.wallet_repository = wallet_repository
         self.user_repository = user_repository
 
-    async def get_balance(self, user_id: int) -> Balance:
-        return await self.wallet_repository.get_balance(user_id)
+    async def get_balance(self, user_id: int, currency_id: int) -> Balance:
+        wallet = (await self.wallet_repository.get_all_wallets(user_id))[0]
+        return await self.wallet_repository.get_balance(user_id, currency_id, wallet.id)
 
-    async def send_money(self, transaction: Transaction) -> None:
-        await self.wallet_repository.create_transaction(transaction)
+    async def send_money(self, transaction_in: Transaction, transaction_out: Transaction) -> None:
+        await self.wallet_repository.create_transaction(transaction_in)
+        await self.wallet_repository.create_transaction(transaction_out)
 
     async def create_wallet(self, user_id: int, currencies: list[Currency]) -> Wallet:
         return await self.wallet_repository.create_wallet(user_id, currencies)
+
+    async def get_all_wallets(self, user_id: int) -> list[Wallet]:
+        return await self.wallet_repository.get_all_wallets(user_id)
 
 
 class ICurrencyService(ABC):

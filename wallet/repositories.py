@@ -2,9 +2,9 @@ from abc import ABC
 from contextlib import AbstractAsyncContextManager
 from typing import Protocol, Coroutine, List
 
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, text
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload, contains_eager
 
 from wallet.models import TransactionModel, WalletModel, BalanceView, CurrencyModel, WalletCurrencyModel
 from wallet.schemas import Transaction, Balance, Wallet, Currency
@@ -27,6 +27,23 @@ class IWalletRepository(ABC):
 class WalletRepository(IWalletRepository):
     def __init__(self, session_factory: Coroutine[None, None, AbstractAsyncContextManager[AsyncSession]]) -> None:
         super().__init__(session_factory)
+
+    async def get_all_wallets(self, user_id: int) -> list[Wallet]:
+        async with self.session_factory() as session:
+            query = (
+                select(WalletModel)
+                .join(WalletCurrencyModel, WalletModel.id == WalletCurrencyModel.wallet_id)
+                .join(CurrencyModel, WalletCurrencyModel.currency_id == CurrencyModel.id)
+                .where(WalletModel.user_id == user_id)
+                .options(
+                    contains_eager(WalletModel.currencies),
+                    joinedload(WalletModel.transactions)
+                )
+            )
+            wallets = (await session.scalars(query)).unique()
+
+        typed_wallets = [Wallet.from_orm(wallet) for wallet in wallets]
+        return typed_wallets
 
     async def create_wallet(self, user_id: int, currencies: list[Currency]) -> Wallet:
         wallet = WalletModel(
@@ -54,10 +71,12 @@ class WalletRepository(IWalletRepository):
         async with self.session_factory() as session:
             walley_query = (
                 select(WalletModel)
+                .join(WalletCurrencyModel, WalletModel.id == WalletCurrencyModel.wallet_id)
+                .join(CurrencyModel, WalletCurrencyModel.currency_id == CurrencyModel.id)
                 .where(WalletModel.id == wallet.id)
                 .options(
-                    joinedload(WalletModel.currencies),
-                    joinedload(WalletModel.transactions),
+                    contains_eager(WalletModel.currencies),
+                    joinedload(WalletModel.transactions)
                 )
             )
             wallet = await session.scalar(walley_query)
@@ -69,6 +88,8 @@ class WalletRepository(IWalletRepository):
         async with self.session_factory as session:
             async with session.begin():
                 session.add(TransactionModel(**transaction.dict()))
+                session.flush()
+                await session.commit()
 
     async def get_transactions(self, user_id: int) -> list[Transaction]:
         async with self.session_factory as session:
@@ -86,9 +107,9 @@ class WalletRepository(IWalletRepository):
         return typed_transactions
 
     async def get_balance(self, user_id: int, currency_id: int, wallet_id: int) -> Balance:
-        async with self.session_factory as session:
-            query = select(BalanceView).where(BalanceView.user_id == user_id)
-            balance = await session.scalar(query)
+        async with self.session_factory() as session:
+            query = text("SELECT * FROM balance_view")
+            balance = await session.execute(query)
 
         typed_balance = Balance.from_orm(balance)
         return typed_balance
