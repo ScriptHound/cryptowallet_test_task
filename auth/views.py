@@ -5,9 +5,8 @@ from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from auth.containers import UserContainer
+from container import Container
 from auth.logic import authenticate_user, create_access_token, get_current_active_user, ACCESS_TOKEN_EXPIRE_MINUTES
 from auth.schemas import Token, User
 from database.configuration import Database
@@ -19,7 +18,7 @@ router = APIRouter()
 @inject
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    database: Database = Depends(Provide(UserContainer.db)),
+    database: Database = Depends(Provide(Container.db)),
 ) -> Token:
     async with database.session() as session:
         user = await authenticate_user(session, form_data.username, form_data.password)

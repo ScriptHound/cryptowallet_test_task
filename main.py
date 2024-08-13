@@ -1,12 +1,13 @@
 from fastapi import FastAPI
 
-from auth.containers import UserContainer
 from auth.views import router as auth_router
+from container import Container
 from user.views import router as users_router
 from wallet.views import router as wallet_router
 
 app = FastAPI()
-container = UserContainer()
+
+container = Container()
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
 app.include_router(wallet_router, prefix="/wallet", tags=["wallet"])
 app.include_router(users_router, prefix="/users", tags=["users"])

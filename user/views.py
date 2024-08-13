@@ -2,7 +2,7 @@ from dependency_injector.wiring import inject, Provide
 from fastapi import APIRouter, Depends, Body
 import bcrypt
 
-from auth.containers import UserContainer
+from container import Container
 from auth.schemas import User
 from auth.services import UserService
 
@@ -24,7 +24,7 @@ async def create_user(
     password: str = Body(...),
     email: str = Body(...),
     full_name: str = Body(...),
-    user_service: UserService = Depends(Provide[UserContainer.user_service])
+    user_service: UserService = Depends(Provide[Container.user_service])
 ):
     hashed_password = hash_password(password)
     user = User(username=username, email=email, full_name=full_name, hashed_password=hashed_password)

@@ -26,7 +26,7 @@ class Transaction(BaseModel):
 
 
 class Currency(BaseModel):
-    id: int
+    id: Optional[int] = None
     name: str
     symbol: str
 
@@ -35,12 +35,11 @@ class Currency(BaseModel):
 
 
 class Wallet(BaseModel):
-    id: int
+    id: Optional[int] = None
     balance: float
     user_id: int
     currencies: list[Currency]
-    transactions: list[Transaction]
+    transactions: Optional[list[Transaction]] = None
 
     class Config:
         from_attributes = True
-
