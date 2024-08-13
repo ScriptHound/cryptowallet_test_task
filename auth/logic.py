@@ -2,19 +2,16 @@ from datetime import timedelta, datetime, timezone
 from typing import Annotated, Optional
 
 import jwt
-from dependency_injector.wiring import inject, Provide
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from jwt import InvalidTokenError
 from passlib.context import CryptContext
-from sqlalchemy.ext.asyncio import AsyncSession
-from starlette import status
 from sqlalchemy import select
+from starlette import status
 
-from auth.schemas import TokenData, User
 from auth.models import UserModel
+from auth.schemas import TokenData, User
 from config import Config
-from container import Container
 from database.configuration import Database
 
 SECRET_KEY = Config.SECRET_KEY

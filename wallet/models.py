@@ -59,17 +59,19 @@ class TransactionModel(Base):
         return f"<Transaction(amount='{self.amount}', type='{self.transaction_type}')>"
 
 
-balance_query = (select(
-    WalletModel.user_id.label("user_id"),
-    WalletModel.id.label("wallet_id"),
-    CurrencyModel.name.label("currency_name"),
-    func.sum(TransactionModel.amount).label("balance"))
-                 .join(TransactionModel, WalletModel.id == TransactionModel.wallet_id)
-                 .join(CurrencyModel, TransactionModel.currency_id == CurrencyModel.id)
-                 .join(WalletCurrencyModel, WalletModel.id == WalletCurrencyModel.wallet_id)
-                 .group_by(WalletModel.user_id, WalletCurrencyModel.currency_id).alias("balance_view"))
-BalanceView = view(
-    "balance_view",
-    Base.metadata,
-    balance_query
-)
+# balance_query = (select(
+#     WalletModel.user_id.label("user_id"),
+#     WalletModel.id.label("wallet_id"),
+#     CurrencyModel.name.label("currency_name"),
+#     func.sum(TransactionModel.amount).label("balance"))
+#                  .join(TransactionModel, WalletModel.id == TransactionModel.wallet_id)
+#                  .join(CurrencyModel, TransactionModel.currency_id == CurrencyModel.id)
+#                  .join(WalletCurrencyModel, WalletModel.id == WalletCurrencyModel.wallet_id)
+#                  .group_by(WalletModel.user_id, WalletCurrencyModel.currency_id).alias("balance_view"))
+#
+# class BalanceView(Base):
+#     __table__ = view(
+#         "balance_view",
+#         Base.metadata,
+#         balance_query
+#     )

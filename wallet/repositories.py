@@ -1,12 +1,12 @@
 from abc import ABC
 from contextlib import AbstractAsyncContextManager
-from typing import Protocol, Coroutine, List
+from typing import Coroutine, List
 
 from sqlalchemy import select, or_, text
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload, selectinload, contains_eager
+from sqlalchemy.orm import joinedload, contains_eager
 
-from wallet.models import TransactionModel, WalletModel, BalanceView, CurrencyModel, WalletCurrencyModel
+from wallet.models import TransactionModel, WalletModel, CurrencyModel, WalletCurrencyModel
 from wallet.schemas import Transaction, Balance, Wallet, Currency
 
 
@@ -108,10 +108,20 @@ class WalletRepository(IWalletRepository):
 
     async def get_balance(self, user_id: int, currency_id: int, wallet_id: int) -> Balance:
         async with self.session_factory() as session:
-            query = text("SELECT * FROM balance_view")
-            balance = await session.execute(query)
+            query = text(
+                "select sum(amount) as balance from transactions where wallet_id = :wallet_id and currency_id = :currency_id"
+            )
+            balance = (await session.execute(query, {"wallet_id": wallet_id, "currency_id": currency_id})).all()
 
-        typed_balance = Balance.from_orm(balance)
+            currency_query = (select(CurrencyModel.name).where(CurrencyModel.id == currency_id))
+            currency_name = await session.scalar(currency_query)
+
+        typed_balance = Balance(
+            user_id=user_id,
+            wallet_id=wallet_id,
+            currency_name=currency_name or "",
+            balance=balance[0][0] or 0
+        )
         return typed_balance
 
 

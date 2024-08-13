@@ -1,13 +1,13 @@
-from typing import Annotated, Optional, Dict
+from typing import Annotated
 
 from dependency_injector.wiring import inject, Provide
-from fastapi import APIRouter, Depends, Path, Body, Header
+from fastapi import APIRouter, Depends, Body
 from fastapi.responses import JSONResponse
 
 from auth.logic import get_current_active_user
 from auth.schemas import User
 from container import Container
-from wallet.schemas import Transaction, Wallet, Currency
+from wallet.schemas import Transaction, Wallet
 from wallet.services import UserWalletService, CurrencyService
 
 router = APIRouter()

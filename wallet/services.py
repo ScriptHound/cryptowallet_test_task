@@ -2,7 +2,7 @@ from abc import ABC
 from typing import List
 
 from user.repositories import UserRepository
-from wallet.repositories import IWalletRepository, CurrencyRepository, WalletRepository
+from wallet.repositories import CurrencyRepository, WalletRepository
 from wallet.schemas import Transaction, Wallet, Balance, Currency
 
 
