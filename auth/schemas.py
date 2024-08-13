@@ -15,6 +15,7 @@ class User(BaseModel):
     email: str
     full_name: str
     disabled: bool = False
+    hashed_password: str
 
     class Config:
         from_attributes = True

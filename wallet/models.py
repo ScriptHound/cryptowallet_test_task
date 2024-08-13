@@ -16,7 +16,6 @@ class WalletModel(Base):
 
     currencies: Mapped["WalletCurrencyModel"] = relationship("WalletCurrencyModel", back_populates="wallet")
     transactions: Mapped["TransactionModel"] = relationship("TransactionModel", back_populates="wallet")
-
     def __repr__(self):
         return f"<Wallet(balance='{self.balance}')>"
 
@@ -51,10 +50,10 @@ class TransactionModel(Base):
     __tablename__ = "transactions"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    wallet_id_from: Mapped[int] = mapped_column(ForeignKey("wallets.id"), index=True)
-    wallet_id_to: Mapped[int] = mapped_column(ForeignKey("wallets.id"), index=True)
+    wallet_id: Mapped[int] = mapped_column(ForeignKey("wallets.id"), index=True)
     currency_id: Mapped[int] = mapped_column(ForeignKey("currencies.id"), index=True)
     amount = mapped_column(Numeric(15, 2), nullable=False)
+    outgoing: Mapped[bool] = mapped_column(nullable=False)
     wallet: Mapped["WalletModel"] = relationship("WalletModel", back_populates="transactions")
     currency: Mapped["CurrencyModel"] = relationship("CurrencyModel")
 
@@ -67,7 +66,7 @@ balance_query = (select(
     WalletModel.id.label("wallet_id"),
     CurrencyModel.name.label("currency_name"),
     func.sum(TransactionModel.amount).label("balance"))
-                 .join(TransactionModel, WalletModel.id == TransactionModel.wallet_id_from)
+                 .join(TransactionModel, WalletModel.id == TransactionModel.wallet_id)
                  .join(CurrencyModel, TransactionModel.currency_id == CurrencyModel.id)
                  .join(WalletCurrencyModel, WalletModel.id == WalletCurrencyModel.wallet_id)
                  .group_by(WalletModel.user_id, WalletCurrencyModel.currency_id).alias("balance_view"))

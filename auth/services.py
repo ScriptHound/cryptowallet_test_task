@@ -4,7 +4,7 @@ from auth.schemas import User
 from user.repositories import UserRepository
 
 
-class UserUseCaseProtocol(Protocol):
+class UserServiceProtocol(Protocol):
     def __init__(self, user_repository: UserRepository) -> None:
         pass
 
@@ -12,7 +12,7 @@ class UserUseCaseProtocol(Protocol):
         pass
 
 
-class UserUseCase(UserUseCaseProtocol):
+class UserService(UserServiceProtocol):
     def __init__(self, user_repository: UserRepository) -> None:
         self.user_repository = user_repository
 

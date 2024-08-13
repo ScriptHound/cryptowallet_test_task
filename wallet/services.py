@@ -5,7 +5,7 @@ from wallet.repositories import WalletRepository
 from wallet.schemas import Transaction, Wallet, Balance
 
 
-class UserWalletUseCaseProtocol(Protocol):
+class UserWalletServiceProtocol(Protocol):
     def __init__(self, wallet_repository: WalletRepository, user_repository: UserRepository):
         pass
 
@@ -19,7 +19,7 @@ class UserWalletUseCaseProtocol(Protocol):
         pass
 
 
-class UserWalletUseCase(UserWalletUseCaseProtocol):
+class UserWalletService(UserWalletServiceProtocol):
     def __init__(self, wallet_repository: WalletRepository, user_repository: UserRepository) -> None:
         self.wallet_repository = wallet_repository
         self.user_repository = user_repository

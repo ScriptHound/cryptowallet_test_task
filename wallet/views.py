@@ -8,7 +8,7 @@ from auth.logic import get_current_active_user
 from auth.schemas import User
 from wallet.containers import WalletContainer
 from wallet.schemas import Transaction, Wallet
-from wallet.usecases import UserWalletUseCase
+from wallet.services import UserWalletService
 
 router = APIRouter()
 
@@ -17,7 +17,7 @@ router = APIRouter()
 @inject
 async def get_all_wallets(
     current_user: Annotated[User, Depends(get_current_active_user)],
-    wallet_usecase: UserWalletUseCase = Depends(Provide[WalletContainer.wallet_usecase])
+    wallet_usecase: UserWalletService = Depends(Provide(WalletContainer.wallet_usecase))
 ):
     wallets = await wallet_usecase.get_all_wallets(current_user.id)
     return wallets
@@ -27,7 +27,7 @@ async def get_all_wallets(
 @inject
 async def create_wallet(
     current_user: Annotated[User, Depends(get_current_active_user)],
-    wallet_usecase: UserWalletUseCase = Depends(Provide[WalletContainer.wallet_usecase])
+    wallet_usecase: UserWalletService = Depends(Provide(WalletContainer.wallet_usecase))
 ) -> Wallet:
     wallet = await wallet_usecase.create_wallet(current_user.id)
     return wallet
@@ -38,7 +38,7 @@ async def create_wallet(
 async def deposit_money(
     current_user: Annotated[User, Depends(get_current_active_user)],
     transaction: Transaction = Body(...),
-    wallet_usecase: UserWalletUseCase = Depends(Provide[WalletContainer.wallet_usecase]),
+    wallet_usecase: UserWalletService = Depends(Provide(WalletContainer.wallet_usecase)),
 ):
     await wallet_usecase.send_money(transaction)
     return JSONResponse({"message": "Money deposited successfully"})

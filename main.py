@@ -1,20 +1,16 @@
 from fastapi import FastAPI
 
+from auth.containers import UserContainer
 from auth.views import router as auth_router
 from user.views import router as users_router
 from wallet.views import router as wallet_router
 
 app = FastAPI()
-
-
-@app.get("/hello/{name}")
-async def say_hello(name: str):
-    return {"message": f"Hello {name}"}
-
-
+container = UserContainer()
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
 app.include_router(wallet_router, prefix="/wallet", tags=["wallet"])
 app.include_router(users_router, prefix="/users", tags=["users"])
+app.container = container
 
 
 # for development purposes

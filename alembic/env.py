@@ -7,6 +7,7 @@ from alembic import context
 from config import Config as ems_config
 from auth.models import *
 from wallet.models import *
+
 from database.configuration import Base
 
 

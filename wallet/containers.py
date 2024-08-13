@@ -2,7 +2,7 @@ from dependency_injector import containers, providers
 from database.configuration import Database
 from user.repositories import UserRepository
 from wallet.repositories import WalletRepository
-from wallet.usecases import UserWalletUseCase
+from wallet.services import UserWalletService
 
 
 class WalletContainer(containers.DeclarativeContainer):
@@ -22,7 +22,7 @@ class WalletContainer(containers.DeclarativeContainer):
     )
 
     wallet_usecase = providers.Factory(
-        UserWalletUseCase,
+        UserWalletService,
         wallet_repository=wallet_repository,
         user_repository=user_repository,
     )
