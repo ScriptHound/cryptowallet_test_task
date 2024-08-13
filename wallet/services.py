@@ -7,7 +7,7 @@ from wallet.schemas import Transaction, Wallet, Balance, Currency
 
 
 class IUserWalletService(ABC):
-    def __init__(self, wallet_repository: IWalletRepository, user_repository: UserRepository):
+    def __init__(self, wallet_repository: WalletRepository, user_repository: UserRepository):
         pass
 
     async def get_balance(self, user_id: int) -> Balance:
@@ -26,6 +26,7 @@ class UserWalletService(IUserWalletService):
         wallet_repository: WalletRepository,
         user_repository: UserRepository,
     ) -> None:
+        super().__init__(wallet_repository, user_repository)
         self.wallet_repository = wallet_repository
         self.user_repository = user_repository
 

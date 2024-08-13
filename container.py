@@ -3,7 +3,7 @@ from dependency_injector import containers, providers
 from auth.services import UserService
 from database.configuration import Database
 from user.repositories import UserRepository
-from wallet.repositories import IWalletRepository, CurrencyRepository
+from wallet.repositories import IWalletRepository, CurrencyRepository, WalletRepository
 from wallet.services import UserWalletService, CurrencyService
 
 
@@ -14,7 +14,7 @@ class Container(containers.DeclarativeContainer):
     db = providers.Singleton(Database)
 
     wallet_repository = providers.Factory(
-        IWalletRepository,
+        WalletRepository,
         session_factory=db.provided.session,
     )
 
@@ -41,5 +41,5 @@ class Container(containers.DeclarativeContainer):
 
     currency_service = providers.Factory(
         CurrencyService,
-        currenct_repository=currency_repository,
+        currency_repository=currency_repository,
     )

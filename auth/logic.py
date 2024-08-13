@@ -2,16 +2,20 @@ from datetime import timedelta, datetime, timezone
 from typing import Annotated, Optional
 
 import jwt
+from dependency_injector.wiring import inject, Provide
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from jwt import InvalidTokenError
 from passlib.context import CryptContext
+from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 from sqlalchemy import select
 
 from auth.schemas import TokenData, User
 from auth.models import UserModel
 from config import Config
+from container import Container
+from database.configuration import Database
 
 SECRET_KEY = Config.SECRET_KEY
 ALGORITHM = "HS256"
@@ -28,14 +32,16 @@ def get_password_hash(password):
     return pwd_context.hash(password)
 
 
-async def get_user(session, username: str) -> Optional[UserModel]:
-    query = select(UserModel).where(UserModel.username == username)
-    user = await session.execute(query)
-    return user.scalar_one_or_none()
+async def get_user(username: str) -> Optional[UserModel]:
+    database = Database()
+    async with database.session() as session:
+        query = select(UserModel).where(UserModel.username == username)
+        user = await session.execute(query)
+        return user.scalar_one_or_none()
 
 
 async def authenticate_user(session, username: str, password: str):
-    user = await get_user(session, username)
+    user = await get_user(username)
     if not user:
         return False
     if not verify_password(password, user.hashed_password):
@@ -56,7 +62,6 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 
 async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
-    session: Annotated[UserModel, Depends(oauth2_scheme)]
 ) -> Optional[UserModel]:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -71,7 +76,7 @@ async def get_current_user(
         token_data = TokenData(username=username)
     except InvalidTokenError:
         raise credentials_exception
-    user = await get_user(session, username=token_data.username)
+    user = await get_user(username=token_data.username)
     if user is None:
         raise credentials_exception
     user_response = User.from_orm(user)

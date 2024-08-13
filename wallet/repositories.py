@@ -4,6 +4,7 @@ from typing import Protocol, Coroutine, List
 
 from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from wallet.models import TransactionModel, WalletModel, BalanceView, CurrencyModel, WalletCurrencyModel
 from wallet.schemas import Transaction, Balance, Wallet, Currency
@@ -32,22 +33,36 @@ class WalletRepository(IWalletRepository):
             user_id=user_id,
             balance=0
         )
-        wallet_currencies = []
-        for currency in currencies:
-            wallet_currency = WalletCurrencyModel(
-                wallet_id=wallet.id,
-                currency_id=currency.id,
+
+
+        async with self.session_factory() as session:
+            session.add(wallet)
+            await session.commit()
+            await session.refresh(wallet)
+
+        async with self.session_factory() as session:
+            wallet_currencies = []
+            for currency in currencies:
+                wallet_currency = WalletCurrencyModel(
+                    wallet_id=wallet.id,
+                    currency_id=currency.id,
+                )
+                wallet_currencies.append(wallet_currency)
+            session.add_all(wallet_currencies)
+            await session.commit()
+
+        async with self.session_factory() as session:
+            walley_query = (
+                select(WalletModel)
+                .where(WalletModel.id == wallet.id)
+                .options(
+                    joinedload(WalletModel.currencies),
+                    joinedload(WalletModel.transactions),
+                )
             )
-            wallet_currencies.append(wallet_currency)
-
-        async with self.session_factory as session:
-            async with session.begin():
-                session.add_all(wallet_currencies)
-                session.add(wallet)
-                session.flush()
-                wallet = await session.get(WalletModel, wallet.id)
-
-        typed_wallet = Wallet.from_orm(wallet)
+            wallet = await session.scalar(walley_query)
+            typed_wallet = Wallet.from_orm(wallet)
+            await session.commit()
         return typed_wallet
 
     async def create_transaction(self, transaction: Transaction) -> None:
@@ -106,9 +121,9 @@ class CurrencyRepository(ICurrencyRepository):
         return typed_currency
 
     async def get_currencies(self, currencies_names: List[str]) -> list[Currency]:
-        async with self.session_factory as session:
+        async with self.session_factory() as session:
             query = select(CurrencyModel).where(CurrencyModel.name.in_(currencies_names))
-            currencies = await session.scalars(query)
+            currencies = (await session.scalars(query)).all()
 
         typed_currencies = [Currency.from_orm(currency) for currency in currencies]
         return typed_currencies
